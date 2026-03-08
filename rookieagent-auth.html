@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Authentication - RookieAgent AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cyan: #00D9FF;
+    --purple: #7B61FF;
+    --pink: #FF3D71;
+    --green: #00ff80;
+    --bg: #050B18;
+    --bg2: #0A1628;
+    --bg3: #0F1F38;
+    --text: #E8F0FF;
+    --text-muted: #8899BB;
+    --border: rgba(0,217,255,0.12);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,217,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,217,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridMove 20s linear infinite;
+    z-index: 0;
+  }
+
+  @keyframes gridMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 60px 60px; }
+  }
+
+  .bg-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .orb1 {
+    width: 500px; height: 500px;
+    background: var(--cyan);
+    top: -250px; left: -250px;
+    animation: float1 20s ease-in-out infinite;
+  }
+
+  .orb2 {
+    width: 400px; height: 400px;
+    background: var(--purple);
+    bottom: -200px; right: -200px;
+    animation: float2 25s ease-in-out infinite;
+  }
+
+  @keyframes float1 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(100px, 100px); }
+  }
+
+  @keyframes float2 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-150px, -80px); }
+  }
+
+  /* Auth container */
+  .auth-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 460px;
+  }
+
+  .auth-card {
+    background: rgba(10, 22, 40, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .auth-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    cursor: pointer;
+  }
+
+  .auth-logo .icon {
+    font-size: 32px;
+  }
+
+  .auth-logo .text {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--cyan);
+  }
+
+  .auth-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .auth-subtitle {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+  }
+
+  /* Form styles */
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .form-input-wrapper {
+    position: relative;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    transition: all 0.2s;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(0,217,255,0.1);
+  }
+
+  .form-input.error {
+    border-color: var(--pink);
+  }
+
+  .form-input.success {
+    border-color: var(--green);
+  }
+
+  .form-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  /* Password toggle */
+  .password-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+
+  .password-toggle:hover {
+    color: var(--text);
+  }
+
+  /* Password strength indicator */
+  .password-strength {
+    margin-top: 8px;
+    display: none;
+  }
+
+  .password-strength.show {
+    display: block;
+  }
+
+  .strength-bars {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .strength-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--bg3);
+    border-radius: 2px;
+    transition: background 0.3s;
+  }
+
+  .strength-bar.active {
+    background: var(--pink);
+  }
+
+  .strength-bar.active.medium {
+    background: #FFB800;
+  }
+
+  .strength-bar.active.strong {
+    background: var(--green);
+  }
+
+  .strength-text {
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .strength-text.weak { color: var(--pink); }
+  .strength-text.medium { color: #FFB800; }
+  .strength-text.strong { color: var(--green); }
+
+  /* Validation message */
+  .validation-message {
+    font-size: 12px;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .validation-message.error {
+    color: var(--pink);
+  }
+
+  .validation-message.success {
+    color: var(--green);
+  }
+
+  /* Checkbox */
+  .checkbox-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg3);
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .checkbox input {
+    display: none;
+  }
+
+  .checkbox.checked {
+    background: var(--cyan);
+    border-color: var(--cyan);
+  }
+
+  .checkbox.checked::after {
+    content: '✓';
+    color: #050B18;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .checkbox-label {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    cursor: pointer;
+  }
+
+  .checkbox-label a {
+    color: var(--cyan);
+    text-decoration: none;
+  }
+
+  .checkbox-label a:hover {
+    text-decoration: underline;
+  }
+
+  /* Button */
+  .btn {
+    width: 100%;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: var(--cyan);
+    color: #050B18;
+    box-shadow: 0 0 20px rgba(0,217,255,0.3);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #00f5ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 30px rgba(0,217,255,0.4);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--cyan);
+    background: rgba(0,217,255,0.05);
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(5,11,24,0.3);
+    border-top-color: #050B18;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Links */
+  .auth-link {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 24px;
+  }
+
+  .auth-link a {
+    color: var(--cyan);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .auth-link a:hover {
+    text-decoration: underline;
+  }
+
+  .forgot-password {
+    text-align: right;
+    margin-top: 8px;
+    margin-bottom: 20px;
+  }
+
+  .forgot-password a {
+    font-size: 13px;
+    color: var(--cyan);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .forgot-password a:hover {
+    text-decoration: underline;
+  }
+
+  /* Toast notification */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+  }
+
+  .toast.success {
+    background: rgba(0,255,128,0.15);
+    border: 1px solid var(--green);
+    color: var(--green);
+  }
+
+  .toast.error {
+    background: rgba(255,61,113,0.15);
+    border: 1px solid var(--pink);
+    color: var(--pink);
+  }
+
+  .toast.info {
+    background: rgba(0,217,255,0.15);
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* Success screen */
+  .success-screen {
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .success-icon {
+    font-size: 64px;
+    margin-bottom: 24px;
+    animation: bounce 0.6s ease;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+
+  .success-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: var(--cyan);
+  }
+
+  .success-message {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    .auth-card {
+      padding: 32px 24px;
+    }
+
+    .auth-title {
+      font-size: 24px;
+    }
+
+    .toast {
+      bottom: 20px;
+      right: 20px;
+      left: 20px;
+      max-width: none;
+    }
+  }
+
+  /* Hide/show views */
+  .view {
+    display: none;
+  }
+
+  .view.active {
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+
+<div class="auth-container">
+  
+  <!-- SIGNUP VIEW -->
+  <div id="signup-view" class="view active">
+    <div class="auth-card">
+      <div class="auth-logo" onclick="goToLanding()">
+        <span class="icon">🤖</span>
+        <span class="text">RookieAgent</span>
+      </div>
+
+      <h1 class="auth-title">Create Your Account</h1>
+      <p class="auth-subtitle">Start building your AI twin today — free for 14 days</p>
+
+      <form id="signup-form" onsubmit="handleSignup(event)">
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">First Name</label>
+            <input 
+              type="text" 
+              class="form-input" 
+              id="signup-first-name"
+              placeholder="Laquita"
+              required
+            >
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Last Name</label>
+            <input 
+              type="text" 
+              class="form-input" 
+              id="signup-last-name"
+              placeholder="Galloway"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input 
+            type="email" 
+            class="form-input" 
+            id="signup-email"
+            placeholder="you@example.com"
+            required
+            oninput="validateEmail(this)"
+          >
+          <div id="email-validation" class="validation-message" style="display: none;"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="form-input-wrapper">
+            <input 
+              type="password" 
+              class="form-input" 
+              id="signup-password"
+              placeholder="Minimum 8 characters"
+              required
+              oninput="checkPasswordStrength(this)"
+            >
+            <button type="button" class="password-toggle" onclick="togglePassword('signup-password')">
+              👁️
+            </button>
+          </div>
+          <div id="password-strength" class="password-strength">
+            <div class="strength-bars">
+              <div class="strength-bar"></div>
+              <div class="strength-bar"></div>
+              <div class="strength-bar"></div>
+              <div class="strength-bar"></div>
+            </div>
+            <div class="strength-text"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <div class="form-input-wrapper">
+            <input 
+              type="password" 
+              class="form-input" 
+              id="signup-confirm-password"
+              placeholder="Re-enter your password"
+              required
+              oninput="validatePasswordMatch()"
+            >
+            <button type="button" class="password-toggle" onclick="togglePassword('signup-confirm-password')">
+              👁️
+            </button>
+          </div>
+          <div id="password-match" class="validation-message" style="display: none;"></div>
+        </div>
+
+        <div class="checkbox-group">
+          <label class="checkbox" onclick="toggleCheckbox(this)">
+            <input type="checkbox" id="terms-checkbox" required>
+          </label>
+          <label class="checkbox-label" for="terms-checkbox">
+            I agree to the <a href="#terms">Terms of Service</a> and <a href="#privacy">Privacy Policy</a>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="signup-btn">
+          Create My Account →
+        </button>
+      </form>
+
+      <div class="auth-link">
+        Already have an account? <a onclick="showView('login')">Sign in</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN VIEW -->
+  <div id="login-view" class="view">
+    <div class="auth-card">
+      <div class="auth-logo" onclick="goToLanding()">
+        <span class="icon">🤖</span>
+        <span class="text">RookieAgent</span>
+      </div>
+
+      <h1 class="auth-title">Welcome Back</h1>
+      <p class="auth-subtitle">Sign in to your account to continue</p>
+
+      <form id="login-form" onsubmit="handleLogin(event)">
+        
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input 
+            type="email" 
+            class="form-input" 
+            id="login-email"
+            placeholder="you@example.com"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="form-input-wrapper">
+            <input 
+              type="password" 
+              class="form-input" 
+              id="login-password"
+              placeholder="Enter your password"
+              required
+            >
+            <button type="button" class="password-toggle" onclick="togglePassword('login-password')">
+              👁️
+            </button>
+          </div>
+          <div id="login-error" class="validation-message error" style="display: none;"></div>
+        </div>
+
+        <div class="checkbox-group" style="margin-bottom: 20px;">
+          <label class="checkbox" onclick="toggleCheckbox(this)">
+            <input type="checkbox" id="remember-checkbox">
+          </label>
+          <label class="checkbox-label" for="remember-checkbox">
+            Remember me for 30 days
+          </label>
+        </div>
+
+        <div class="forgot-password">
+          <a onclick="showView('forgot-password')">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="login-btn">
+          Sign In
+        </button>
+      </form>
+
+      <div class="divider">or</div>
+
+      <button class="btn btn-ghost" onclick="showToast('Google login coming soon!', 'info')">
+        <span>🔍</span> Continue with Google
+      </button>
+
+      <div class="auth-link">
+        Don't have an account? <a onclick="showView('signup')">Sign up free</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORGOT PASSWORD VIEW -->
+  <div id="forgot-password-view" class="view">
+    <div class="auth-card">
+      <div class="auth-logo" onclick="goToLanding()">
+        <span class="icon">🤖</span>
+        <span class="text">RookieAgent</span>
+      </div>
+
+      <h1 class="auth-title">Reset Password</h1>
+      <p class="auth-subtitle">Enter your email and we'll send you a reset link</p>
+
+      <form id="forgot-password-form" onsubmit="handleForgotPassword(event)">
+        
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input 
+            type="email" 
+            class="form-input" 
+            id="reset-email"
+            placeholder="you@example.com"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="reset-btn">
+          Send Reset Link
+        </button>
+      </form>
+
+      <div class="auth-link">
+        <a onclick="showView('login')">← Back to login</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESET SUCCESS VIEW -->
+  <div id="reset-success-view" class="view">
+    <div class="auth-card">
+      <div class="success-screen">
+        <div class="success-icon">✉️</div>
+        <h2 class="success-title">Check Your Email</h2>
+        <p class="success-message">
+          We've sent a password reset link to <strong id="reset-email-display"></strong>
+          <br><br>
+          Click the link in the email to reset your password.
+        </p>
+        <button class="btn btn-primary" onclick="showView('login')">
+          Back to Login
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW PASSWORD VIEW (from email link) -->
+  <div id="new-password-view" class="view">
+    <div class="auth-card">
+      <div class="auth-logo" onclick="goToLanding()">
+        <span class="icon">🤖</span>
+        <span class="text">RookieAgent</span>
+      </div>
+
+      <h1 class="auth-title">Set New Password</h1>
+      <p class="auth-subtitle">Choose a strong password for your account</p>
+
+      <form id="new-password-form" onsubmit="handleNewPassword(event)">
+        
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <div class="form-input-wrapper">
+            <input 
+              type="password" 
+              class="form-input" 
+              id="new-password"
+              placeholder="Minimum 8 characters"
+              required
+              oninput="checkPasswordStrength(this, 'new')"
+            >
+            <button type="button" class="password-toggle" onclick="togglePassword('new-password')">
+              👁️
+            </button>
+          </div>
+          <div id="new-password-strength" class="password-strength">
+            <div class="strength-bars">
+              <div class="strength-bar"></div>
+              <div class="strength-bar"></div>
+              <div class="strength-bar"></div>
+              <div class="strength-bar"></div>
+            </div>
+            <div class="strength-text"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm New Password</label>
+          <div class="form-input-wrapper">
+            <input 
+              type="password" 
+              class="form-input" 
+              id="new-confirm-password"
+              placeholder="Re-enter your password"
+              required
+              oninput="validatePasswordMatch('new')"
+            >
+            <button type="button" class="password-toggle" onclick="togglePassword('new-confirm-password')">
+              👁️
+            </button>
+          </div>
+          <div id="new-password-match" class="validation-message" style="display: none;"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="new-password-btn">
+          Reset Password
+        </button>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ==================== SUPABASE CONFIGURATION ====================
+// 
+// TO CONNECT TO SUPABASE:
+// 1. Create a Supabase project at https://supabase.com
+// 2. Go to Settings > API
+// 3. Copy your project URL and anon key
+// 4. Replace the values below:
+
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+// Uncomment this when you have Supabase credentials:
+// const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ==================== VIEW MANAGEMENT ====================
+
+function showView(viewName) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(viewName + '-view').classList.add('active');
+}
+
+function goToLanding() {
+  // In production, redirect to your landing page
+  window.location.href = '/';
+}
+
+// ==================== PASSWORD TOGGLE ====================
+
+function togglePassword(inputId) {
+  const input = document.getElementById(inputId);
+  const btn = event.currentTarget;
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+
+// ==================== CHECKBOX TOGGLE ====================
+
+function toggleCheckbox(checkbox) {
+  const input = checkbox.querySelector('input');
+  input.checked = !input.checked;
+  
+  if (input.checked) {
+    checkbox.classList.add('checked');
+  } else {
+    checkbox.classList.remove('checked');
+  }
+}
+
+// ==================== EMAIL VALIDATION ====================
+
+function validateEmail(input) {
+  const email = input.value.trim();
+  const validation = document.getElementById('email-validation');
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+  if (email.length === 0) {
+    validation.style.display = 'none';
+    input.classList.remove('error', 'success');
+    return;
+  }
+  
+  if (emailRegex.test(email)) {
+    validation.style.display = 'flex';
+    validation.className = 'validation-message success';
+    validation.innerHTML = '<span>✓</span> Valid email address';
+    input.classList.remove('error');
+    input.classList.add('success');
+  } else {
+    validation.style.display = 'flex';
+    validation.className = 'validation-message error';
+    validation.innerHTML = '<span>✗</span> Please enter a valid email';
+    input.classList.remove('success');
+    input.classList.add('error');
+  }
+}
+
+// ==================== PASSWORD STRENGTH ====================
+
+function checkPasswordStrength(input, prefix = '') {
+  const password = input.value;
+  const strengthDiv = document.getElementById((prefix ? 'new-' : '') + 'password-strength');
+  const bars = strengthDiv.querySelectorAll('.strength-bar');
+  const text = strengthDiv.querySelector('.strength-text');
+  
+  if (password.length === 0) {
+    strengthDiv.classList.remove('show');
+    return;
+  }
+  
+  strengthDiv.classList.add('show');
+  
+  let strength = 0;
+  
+  // Length check
+  if (password.length >= 8) strength++;
+  if (password.length >= 12) strength++;
+  
+  // Complexity checks
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+  if (/[0-9]/.test(password)) strength++;
+  if (/[^a-zA-Z0-9]/.test(password)) strength++;
+  
+  // Reset bars
+  bars.forEach(bar => {
+    bar.classList.remove('active', 'medium', 'strong');
+  });
+  
+  // Set strength
+  if (strength <= 2) {
+    for (let i = 0; i < Math.min(strength, 2); i++) {
+      bars[i].classList.add('active');
+    }
+    text.textContent = 'Weak password';
+    text.className = 'strength-text weak';
+  } else if (strength <= 4) {
+    for (let i = 0; i < 3; i++) {
+      bars[i].classList.add('active', 'medium');
+    }
+    text.textContent = 'Medium password';
+    text.className = 'strength-text medium';
+  } else {
+    bars.forEach(bar => bar.classList.add('active', 'strong'));
+    text.textContent = 'Strong password';
+    text.className = 'strength-text strong';
+  }
+}
+
+// ==================== PASSWORD MATCH ====================
+
+function validatePasswordMatch(prefix = '') {
+  const password = document.getElementById((prefix ? 'new-' : 'signup-') + 'password').value;
+  const confirm = document.getElementById((prefix ? 'new-confirm-' : 'signup-confirm-') + 'password').value;
+  const validation = document.getElementById((prefix ? 'new-' : '') + 'password-match');
+  
+  if (confirm.length === 0) {
+    validation.style.display = 'none';
+    return;
+  }
+  
+  if (password === confirm) {
+    validation.style.display = 'flex';
+    validation.className = 'validation-message success';
+    validation.innerHTML = '<span>✓</span> Passwords match';
+  } else {
+    validation.style.display = 'flex';
+    validation.className = 'validation-message error';
+    validation.innerHTML = '<span>✗</span> Passwords do not match';
+  }
+}
+
+// ==================== TOAST NOTIFICATION ====================
+
+function showToast(message, type = 'success') {
+  // Remove existing toast
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  
+  // Create toast
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  
+  const icon = {
+    success: '✅',
+    error: '❌',
+    info: 'ℹ️'
+  }[type] || '✅';
+  
+  toast.innerHTML = `
+    <span style="font-size: 20px;">${icon}</span>
+    <span>${message}</span>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Auto remove after 4 seconds
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// ==================== SIGNUP ====================
+
+async function handleSignup(event) {
+  event.preventDefault();
+  
+  const btn = document.getElementById('signup-btn');
+  const firstName = document.getElementById('signup-first-name').value.trim();
+  const lastName = document.getElementById('signup-last-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const confirmPassword = document.getElementById('signup-confirm-password').value;
+  const termsChecked = document.getElementById('terms-checkbox').checked;
+  
+  // Validation
+  if (!termsChecked) {
+    showToast('Please accept the Terms of Service', 'error');
+    return;
+  }
+  
+  if (password.length < 8) {
+    showToast('Password must be at least 8 characters', 'error');
+    return;
+  }
+  
+  if (password !== confirmPassword) {
+    showToast('Passwords do not match', 'error');
+    return;
+  }
+  
+  // Show loading
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Creating account...';
+  
+  try {
+    // DEMO MODE - Replace with Supabase
+    // const { data, error } = await supabase.auth.signUp({
+    //   email: email,
+    //   password: password,
+    //   options: {
+    //     data: {
+    //       first_name: firstName,
+    //       last_name: lastName
+    //     }
+    //   }
+    // });
+    
+    // if (error) throw error;
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Store session (demo)
+    localStorage.setItem('rookieagent_user', JSON.stringify({
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+      createdAt: new Date().toISOString()
+    }));
+    
+    // Success
+    showToast(`Welcome to RookieAgent, ${firstName}! 🎉`, 'success');
+    
+    // Redirect to dashboard
+    setTimeout(() => {
+      window.location.href = 'rookieagent-dashboard.html';
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Signup error:', error);
+    showToast(error.message || 'Signup failed. Please try again.', 'error');
+    btn.disabled = false;
+    btn.innerHTML = 'Create My Account →';
+  }
+}
+
+// ==================== LOGIN ====================
+
+async function handleLogin(event) {
+  event.preventDefault();
+  
+  const btn = document.getElementById('login-btn');
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const remember = document.getElementById('remember-checkbox').checked;
+  const errorDiv = document.getElementById('login-error');
+  
+  // Show loading
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Signing in...';
+  errorDiv.style.display = 'none';
+  
+  try {
+    // DEMO MODE - Replace with Supabase
+    // const { data, error } = await supabase.auth.signInWithPassword({
+    //   email: email,
+    //   password: password
+    // });
+    
+    // if (error) throw error;
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    
+    // Check credentials (demo)
+    const demoUser = {
+      email: 'lgalloway@norluxerealty.com',
+      password: 'Password123!',
+      firstName: 'Laquita',
+      lastName: 'Galloway'
+    };
+    
+    if (email === demoUser.email && password === demoUser.password) {
+      // Store session
+      localStorage.setItem('rookieagent_user', JSON.stringify({
+        email: email,
+        firstName: demoUser.firstName,
+        lastName: demoUser.lastName,
+        remember: remember
+      }));
+      
+      // Success
+      showToast('Welcome back! 👋', 'success');
+      
+      // Redirect
+      setTimeout(() => {
+        window.location.href = 'rookieagent-dashboard.html';
+      }, 800);
+    } else {
+      throw new Error('Invalid email or password');
+    }
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    errorDiv.style.display = 'flex';
+    errorDiv.innerHTML = '<span>✗</span> Invalid email or password';
+    showToast('Login failed. Please check your credentials.', 'error');
+    btn.disabled = false;
+    btn.innerHTML = 'Sign In';
+  }
+}
+
+// ==================== FORGOT PASSWORD ====================
+
+async function handleForgotPassword(event) {
+  event.preventDefault();
+  
+  const btn = document.getElementById('reset-btn');
+  const email = document.getElementById('reset-email').value.trim();
+  
+  // Show loading
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Sending...';
+  
+  try {
+    // DEMO MODE - Replace with Supabase
+    // const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    //   redirectTo: window.location.origin + '/reset-password'
+    // });
+    
+    // if (error) throw error;
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Show success
+    document.getElementById('reset-email-display').textContent = email;
+    showView('reset-success');
+    showToast('Reset link sent! Check your email.', 'success');
+    
+  } catch (error) {
+    console.error('Reset error:', error);
+    showToast('Failed to send reset link. Please try again.', 'error');
+    btn.disabled = false;
+    btn.innerHTML = 'Send Reset Link';
+  }
+}
+
+// ==================== NEW PASSWORD ====================
+
+async function handleNewPassword(event) {
+  event.preventDefault();
+  
+  const btn = document.getElementById('new-password-btn');
+  const password = document.getElementById('new-password').value;
+  const confirmPassword = document.getElementById('new-confirm-password').value;
+  
+  // Validation
+  if (password.length < 8) {
+    showToast('Password must be at least 8 characters', 'error');
+    return;
+  }
+  
+  if (password !== confirmPassword) {
+    showToast('Passwords do not match', 'error');
+    return;
+  }
+  
+  // Show loading
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Resetting...';
+  
+  try {
+    // DEMO MODE - Replace with Supabase
+    // const { error } = await supabase.auth.updateUser({
+    //   password: password
+    // });
+    
+    // if (error) throw error;
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Success
+    showToast('Password reset successfully! 🎉', 'success');
+    
+    // Redirect to login
+    setTimeout(() => {
+      showView('login');
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Reset error:', error);
+    showToast('Failed to reset password. Please try again.', 'error');
+    btn.disabled = false;
+    btn.innerHTML = 'Reset Password';
+  }
+}
+
+// ==================== SESSION CHECK ====================
+
+// Check if user is already logged in
+window.addEventListener('DOMContentLoaded', () => {
+  const user = localStorage.getItem('rookieagent_user');
+  
+  if (user) {
+    // User is logged in, redirect to dashboard
+    window.location.href = 'rookieagent-dashboard.html';
+  }
+  
+  // Check for password reset token in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('reset') === 'true') {
+    showView('new-password');
+  }
+});
+
+// ==================== DEMO CREDENTIALS ====================
+// For testing purposes:
+// Email: lgalloway@norluxerealty.com
+// Password: Password123!
+</script>
+
+</body>
+</html>

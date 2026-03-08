@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Your AI Twin - RookieAgent AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cyan: #00D9FF;
+    --purple: #7B61FF;
+    --pink: #FF3D71;
+    --green: #00ff80;
+    --bg: #050B18;
+    --bg2: #0A1628;
+    --bg3: #0F1F38;
+    --text: #E8F0FF;
+    --text-muted: #8899BB;
+    --border: rgba(0,217,255,0.12);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--cyan);
+    margin-bottom: 32px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px;
+    margin-bottom: 32px;
+  }
+
+  .steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 48px;
+    position: relative;
+  }
+
+  .steps::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+  }
+
+  .step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    transition: all 0.3s;
+  }
+
+  .step.active .step-number {
+    background: var(--cyan);
+    border-color: var(--cyan);
+    color: #050B18;
+    box-shadow: 0 0 20px rgba(0,217,255,0.4);
+  }
+
+  .step.complete .step-number {
+    background: var(--green);
+    border-color: var(--green);
+    color: #050B18;
+  }
+
+  .step.complete .step-number::after {
+    content: '✓';
+    font-size: 20px;
+  }
+
+  .step-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .step.active .step-label {
+    color: var(--cyan);
+  }
+
+  .upload-area {
+    border: 2px dashed var(--border);
+    border-radius: 20px;
+    padding: 60px 40px;
+    text-align: center;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upload-area:hover {
+    border-color: var(--cyan);
+    background: rgba(0,217,255,0.03);
+  }
+
+  .upload-area.drag-over {
+    border-color: var(--cyan);
+    background: rgba(0,217,255,0.1);
+    transform: scale(1.02);
+  }
+
+  .upload-icon {
+    font-size: 64px;
+    margin-bottom: 24px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .upload-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .upload-text {
+    font-size: 16px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  .btn {
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: var(--cyan);
+    color: #050B18;
+    box-shadow: 0 0 20px rgba(0,217,255,0.3);
+  }
+
+  .btn-primary:hover {
+    background: #00f5ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 30px rgba(0,217,255,0.4);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .requirements {
+    margin-top: 32px;
+    padding: 24px;
+    background: var(--bg3);
+    border-radius: 16px;
+  }
+
+  .requirements-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--cyan);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  .requirement-list {
+    list-style: none;
+  }
+
+  .requirement-list li {
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+  }
+
+  .requirement-list li::before {
+    content: '✓';
+    color: var(--green);
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .file-preview {
+    display: none;
+    margin-top: 32px;
+  }
+
+  .file-preview.show {
+    display: block;
+  }
+
+  .file-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: var(--bg3);
+    border-radius: 16px;
+    margin-bottom: 20px;
+  }
+
+  .file-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: rgba(0,217,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+
+  .file-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .file-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-size {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .file-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn-small {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .progress-container {
+    display: none;
+    margin-top: 32px;
+  }
+
+  .progress-container.show {
+    display: block;
+  }
+
+  .progress-status {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .progress-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    animation: spin 2s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .progress-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .progress-text {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .progress-bar {
+    height: 8px;
+    background: var(--bg3);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    border-radius: 10px;
+    transition: width 0.5s ease;
+  }
+
+  .progress-percentage {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cyan);
+  }
+
+  .processing-steps {
+    margin-top: 32px;
+  }
+
+  .processing-step {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg3);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+    transition: all 0.3s;
+  }
+
+  .processing-step.active {
+    opacity: 1;
+    background: rgba(0,217,255,0.1);
+    border: 1px solid rgba(0,217,255,0.3);
+  }
+
+  .processing-step.complete {
+    opacity: 1;
+  }
+
+  .processing-step-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .processing-step.complete .processing-step-icon {
+    background: var(--green);
+  }
+
+  .processing-step-text {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 48px 24px;
+  }
+
+  .success-screen.show {
+    display: block;
+  }
+
+  .success-icon {
+    font-size: 80px;
+    margin-bottom: 24px;
+    animation: bounce 0.6s ease;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+
+  .success-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    color: var(--cyan);
+  }
+
+  .success-message {
+    font-size: 16px;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    .card { padding: 32px 24px; }
+    h1 { font-size: 28px; }
+    .steps { flex-direction: column; gap: 24px; }
+    .steps::before { display: none; }
+    .upload-area { padding: 40px 24px; }
+    .file-info { flex-direction: column; text-align: center; }
+    .file-actions { width: 100%; }
+    .file-actions button { flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="logo">
+      <span>🤖</span>
+      <span>RookieAgent</span>
+    </div>
+    <h1>Create Your AI Twin</h1>
+    <p class="subtitle">
+      Upload a training video and we'll create your AI twin that can generate unlimited videos in your voice and likeness.
+    </p>
+  </div>
+
+  <div class="steps">
+    <div class="step active" id="step-1">
+      <div class="step-number">1</div>
+      <div class="step-label">Upload Video</div>
+    </div>
+    <div class="step" id="step-2">
+      <div class="step-number">2</div>
+      <div class="step-label">Processing</div>
+    </div>
+    <div class="step" id="step-3">
+      <div class="step-number">3</div>
+      <div class="step-label">AI Twin Ready</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="upload-section">
+      <div 
+        class="upload-area" 
+        id="upload-area"
+        ondrop="handleDrop(event)"
+        ondragover="handleDragOver(event)"
+        ondragleave="handleDragLeave(event)"
+        onclick="document.getElementById('file-input').click()"
+      >
+        <div class="upload-icon">📹</div>
+        <h3 class="upload-title">Upload Your Training Video</h3>
+        <p class="upload-text">
+          Drag and drop your video here, or click to browse
+          <br>
+          <strong>Supported formats:</strong> MP4, MOV, AVI
+        </p>
+        <button class="btn btn-primary">
+          📂 Browse Files
+        </button>
+        <input 
+          type="file" 
+          id="file-input" 
+          class="file-input"
+          accept="video/mp4,video/quicktime,video/x-msvideo"
+          onchange="handleFileSelect(event)"
+        >
+      </div>
+
+      <div class="requirements">
+        <div class="requirements-title">Video Requirements</div>
+        <ul class="requirement-list">
+          <li>2-5 minutes long (ideal: 3 minutes)</li>
+          <li>You talking naturally and clearly</li>
+          <li>Good lighting (bright, not dark)</li>
+          <li>Clear audio (no background noise)</li>
+          <li>Directly facing camera (not profile)</li>
+          <li>Multiple angles and expressions (recommended)</li>
+        </ul>
+      </div>
+
+      <div class="file-preview" id="file-preview">
+        <div class="file-info">
+          <div class="file-icon">🎬</div>
+          <div class="file-details">
+            <div class="file-name" id="file-name">video.mp4</div>
+            <div class="file-size" id="file-size">45.2 MB</div>
+          </div>
+          <div class="file-actions">
+            <button class="btn btn-ghost btn-small" onclick="removeFile()">
+              ✗ Remove
+            </button>
+            <button class="btn btn-primary btn-small" onclick="uploadFile()">
+              ✓ Upload
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-container" id="progress-section">
+      <div class="progress-status">
+        <div class="progress-icon">⚙️</div>
+        <h3 class="progress-title">Creating Your AI Twin...</h3>
+        <p class="progress-text">This usually takes 20-30 minutes. We'll email you when it's ready!</p>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-percentage" id="progress-percentage">0%</div>
+
+      <div class="processing-steps">
+        <div class="processing-step" id="step-upload">
+          <div class="processing-step-icon">📤</div>
+          <div class="processing-step-text">Uploading video...</div>
+        </div>
+        <div class="processing-step" id="step-analyze">
+          <div class="processing-step-icon">🔍</div>
+          <div class="processing-step-text">Analyzing your voice and appearance...</div>
+        </div>
+        <div class="processing-step" id="step-heygen">
+          <div class="processing-step-icon">🎭</div>
+          <div class="processing-step-text">Creating avatar with HeyGen...</div>
+        </div>
+        <div class="processing-step" id="step-elevenlabs">
+          <div class="processing-step-icon">🎤</div>
+          <div class="processing-step-text">Cloning voice with ElevenLabs...</div>
+        </div>
+        <div class="processing-step" id="step-finalize">
+          <div class="processing-step-icon">✨</div>
+          <div class="processing-step-text">Finalizing your AI twin...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="success-screen" id="success-section">
+      <div class="success-icon">🎉</div>
+      <h2 class="success-title">Your AI Twin is Ready!</h2>
+      <p class="success-message">
+        Congratulations! Your AI twin has been successfully created.
+        <br><br>
+        You can now generate unlimited professional videos in your voice and likeness.
+      </p>
+      <button class="btn btn-primary" onclick="window.location.href='ai-twin-generator.html'">
+        🎬 Generate Your First Video →
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedFile = null;
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('upload-area').classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('upload-area').classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('upload-area').classList.remove('drag-over');
+  
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    handleFile(files[0]);
+  }
+}
+
+function handleFileSelect(e) {
+  const files = e.target.files;
+  if (files.length > 0) {
+    handleFile(files[0]);
+  }
+}
+
+function handleFile(file) {
+  const validTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo'];
+  if (!validTypes.includes(file.type)) {
+    alert('Please upload a valid video file (MP4, MOV, or AVI)');
+    return;
+  }
+  
+  const maxSize = 500 * 1024 * 1024;
+  if (file.size > maxSize) {
+    alert('File size must be less than 500MB');
+    return;
+  }
+  
+  selectedFile = file;
+  document.getElementById('file-name').textContent = file.name;
+  document.getElementById('file-size').textContent = formatFileSize(file.size);
+  document.getElementById('file-preview').classList.add('show');
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+function removeFile() {
+  selectedFile = null;
+  document.getElementById('file-preview').classList.remove('show');
+  document.getElementById('file-input').value = '';
+}
+
+async function uploadFile() {
+  if (!selectedFile) {
+    alert('Please select a file first');
+    return;
+  }
+  
+  document.getElementById('upload-section').style.display = 'none';
+  document.getElementById('progress-section').classList.add('show');
+  document.getElementById('step-1').classList.add('complete');
+  document.getElementById('step-2').classList.add('active');
+  
+  // TODO: Replace with actual Make.com webhook
+  // await triggerMakeComWebhook(selectedFile);
+  
+  await simulateProcessing();
+}
+
+async function simulateProcessing() {
+  const steps = [
+    { id: 'step-upload', duration: 3000, progress: 20 },
+    { id: 'step-analyze', duration: 5000, progress: 40 },
+    { id: 'step-heygen', duration: 8000, progress: 70 },
+    { id: 'step-elevenlabs', duration: 5000, progress: 90 },
+    { id: 'step-finalize', duration: 2000, progress: 100 }
+  ];
+  
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    document.getElementById(step.id).classList.add('active');
+    document.getElementById('progress-fill').style.width = step.progress + '%';
+    document.getElementById('progress-percentage').textContent = step.progress + '%';
+    await new Promise(resolve => setTimeout(resolve, step.duration));
+    document.getElementById(step.id).classList.remove('active');
+    document.getElementById(step.id).classList.add('complete');
+  }
+  
+  showSuccess();
+}
+
+function showSuccess() {
+  document.getElementById('progress-section').classList.remove('show');
+  document.getElementById('success-section').classList.add('show');
+  document.getElementById('step-2').classList.add('complete');
+  document.getElementById('step-3').classList.add('active');
+  document.getElementById('step-3').classList.add('complete');
+  
+  localStorage.setItem('ai_twin_status', 'ready');
+  localStorage.setItem('ai_twin_created_at', new Date().toISOString());
+}
+</script>
+
+</body>
+</html>
